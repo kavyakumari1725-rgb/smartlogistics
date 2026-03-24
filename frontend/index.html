@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LogistiQ — AI Logistics Predictor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e2d45;
+  --accent:#3b82f6;--accent2:#06b6d4;--green:#10b981;--amber:#f59e0b;
+  --red:#ef4444;--text:#f1f5f9;--muted:#64748b;--card:#131d30;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 60% 40%,rgba(59,130,246,.12),transparent 60%),var(--bg);
+}
+.auth-box{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:40px;width:100%;max-width:420px;
+}
+.auth-logo{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.auth-subtitle{color:var(--muted);font-size:14px;margin-bottom:32px}
+.auth-tabs{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:24px}
+.auth-tab{flex:1;padding:8px;text-align:center;border-radius:7px;cursor:pointer;font-size:13px;
+  color:var(--muted);border:none;background:none;transition:all .15s}
+.auth-tab.active{background:var(--accent);color:#fff;font-weight:500}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;
+  transition:border-color .15s;outline:none;width:100%;
+}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:14px;
+  font-weight:500;font-family:'Inter',sans-serif;transition:all .15s;
+  display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;justify-content:center;width:100%}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border)}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.auth-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
+  color:#f87171;padding:10px 14px;border-radius:8px;font-size:13px;display:none}
+.auth-config{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:10px;padding:14px;margin-bottom:20px;font-size:12px;color:var(--muted);line-height:1.6}
+.auth-config strong{color:var(--amber)}
+
+/* ── APP ── */
+#app-screen{display:none}
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;border-bottom:1px solid var(--border);
+  background:rgba(10,14,26,.97);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);
+}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;
+  color:var(--muted);border:none;background:none;transition:all .15s}
+.nav-tab:hover{color:var(--text);background:var(--surface2)}
+.nav-tab.active{color:var(--text);background:var(--surface2);font-weight:500}
+.nav-right{display:flex;align-items:center;gap:12px}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px}
+.user-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.badge{background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+
+main{max-width:1200px;margin:0 auto;padding:28px}
+.page{display:none}.page.active{display:block}
+
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:14px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+select option{background:var(--surface2)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:9px 11px;font-size:11px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:11px;border-bottom:1px solid rgba(30,45,69,.5);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.s-ontime{background:rgba(16,185,129,.15);color:#34d399}
+.s-delayed{background:rgba(245,158,11,.15);color:#fbbf24}
+.s-critical{background:rgba(239,68,68,.15);color:#f87171}
+.s-transit{background:rgba(59,130,246,.15);color:#60a5fa}
+.s-pending{background:rgba(100,116,139,.15);color:#94a3b8}
+
+.risk-meter{height:6px;border-radius:3px;overflow:hidden;background:var(--border);margin-top:4px}
+.risk-fill{height:100%;border-radius:3px;transition:width .5s ease}
+
+.prediction-box{background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(6,182,212,.08));
+  border:1px solid rgba(59,130,246,.25);border-radius:12px;padding:18px;margin-top:14px}
+.prediction-box h4{font-size:13px;color:var(--accent2);margin-bottom:8px}
+.prediction-box p{font-size:13px;line-height:1.7}
+.pred-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.pred-metric{background:rgba(0,0,0,.2);border-radius:8px;padding:11px;text-align:center}
+.pred-metric .val{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700}
+.pred-metric .lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.alert{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.alert-success{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#34d399}
+.alert-error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#f87171}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:26px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;margin-bottom:18px}
+
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .icon{font-size:40px;margin-bottom:10px}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:700}
+
+/* Real-time indicator */
+.rt-dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+  animation:pulse 2s infinite;display:inline-block;margin-right:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Loading overlay */
+#loading{position:fixed;inset:0;background:var(--bg);z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#loading .logo-big{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.load-bar{width:200px;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.load-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  animation:load 1.2s ease-in-out infinite alternate}
+@keyframes load{from{width:10%}to{width:90%}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="logo-big">LogistiQ</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+  <div style="font-size:13px;color:var(--muted)">Initialising...</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Shipment</div>
+    <div id="edit-form-fields"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="saveEdit()">
+        <span id="edit-spinner" style="display:none" class="spinner"></span>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  AUTH SCREEN                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">LogistiQ</div>
+    <div class="auth-subtitle">AI-powered logistics intelligence platform</div>
+
+    <div class="auth-config" id="config-section">
+      <strong>⚙️ First-time setup</strong><br>
+      Enter your backend URL and Firebase config below, then create an account.
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <input type="text" id="cfg-backend" placeholder="Backend URL (e.g. http://localhost:3001)" value="http://localhost:3001"/>
+        <input type="text" id="cfg-fb-apiKey" placeholder="Firebase apiKey"/>
+        <input type="text" id="cfg-fb-authDomain" placeholder="Firebase authDomain (project.firebaseapp.com)"/>
+        <input type="text" id="cfg-fb-projectId" placeholder="Firebase projectId"/>
+        <button class="btn btn-ghost btn-sm" style="width:auto;align-self:flex-start" onclick="saveConfig()">Save Config</button>
+      </div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Create Account</button>
+    </div>
+
+    <div class="auth-form" id="auth-form">
+      <div class="form-group" id="name-field" style="display:none">
+        <label>Full Name</label>
+        <input type="text" id="auth-name" placeholder="Your name"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="Min 6 characters"/>
+      </div>
+      <div class="auth-error" id="auth-error"></div>
+      <button class="btn btn-primary" id="auth-btn" onclick="handleAuth()">
+        <span id="auth-spinner" style="display:none" class="spinner"></span>
+        <span id="auth-btn-text">Sign In</span>
+      </button>
+      <p style="font-size:12px;color:var(--muted);text-align:center">
+        Demo: use any email & password (min 6 chars) to create an account
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  MAIN APP                                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="app-screen">
+  <nav>
+    <div class="logo">LogistiQ</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('dashboard',this)">📊 Dashboard</button>
+      <button class="nav-tab" onclick="showPage('shipments',this)">📦 Shipments</button>
+      <button class="nav-tab" onclick="showPage('predict',this)">🤖 AI Predict</button>
+      <button class="nav-tab" onclick="showPage('routes',this)">🗺 Routes</button>
+    </div>
+    <div class="nav-right">
+      <div class="user-pill">
+        <div class="user-dot"></div>
+        <span id="user-email-display">—</span>
+      </div>
+      <div class="badge">TIER 4</div>
+      <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Operations Dashboard</div>
+          <div style="color:var(--muted);font-size:12px;margin-top:2px">
+            <span class="rt-dot"></span>Live logistics intelligence
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:auto" onclick="showPage('shipments',document.querySelectorAll('.nav-tab')[1]);setTimeout(()=>toggleAdd(true),100)">
+          + New Shipment
+        </button>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-card"><div class="stat-label">Total Shipments</div><div class="stat-val" id="st-total">0</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card"><div class="stat-label">In Transit</div><div class="stat-val" style="color:var(--accent)" id="st-transit">0</div><div class="stat-sub">Active now</div></div>
+        <div class="stat-card"><div class="stat-label">At Risk</div><div class="stat-val" style="color:var(--amber)" id="st-risk">0</div><div class="stat-sub">Needs attention</div></div>
+        <div class="stat-card"><div class="stat-label">On-Time Rate</div><div class="stat-val" style="color:var(--green)" id="st-ontime">—</div><div class="stat-sub">Performance</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-title">🚨 Critical Shipments</div>
+          <div id="critical-list"><div class="empty" style="padding:24px"><div class="icon">✅</div><p>No critical shipments</p></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Recent Activity</div>
+          <div id="activity-list"><div class="empty" style="padding:24px"><div class="icon">📦</div><p>No activity yet</p></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🤖 AI Fleet Intelligence <span style="font-size:11px;color:var(--muted);font-weight:400">— Claude analysis</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="loadFleetIntel()">Refresh</button>
+        </div>
+        <div id="fleet-intel"><div class="empty" style="padding:24px"><div class="icon">🧠</div><p>Click Refresh to get AI fleet analysis</p></div></div>
+      </div>
+    </div>
+
+    <!-- SHIPMENTS -->
+    <div class="page" id="page-shipments">
+      <div class="section-header">
+        <div class="section-title">Shipment Management</div>
+        <button class="btn btn-primary" style="width:auto" onclick="toggleAdd(true)">+ New Shipment</button>
+      </div>
+
+      <div class="card" id="add-form" style="display:none">
+        <div class="card-title">📦 New Shipment</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Tracking ID</label><input id="f-id" placeholder="e.g. SHP-2024-001"/></div>
+          <div class="form-group"><label>Cargo Type</label>
+            <select id="f-cargo"><option>Electronics</option><option>Pharmaceuticals</option><option>Food & Perishables</option><option>Industrial Equipment</option><option>Clothing & Textiles</option><option>Automotive Parts</option><option>General Freight</option></select></div>
+          <div class="form-group"><label>Origin</label><input id="f-origin" placeholder="e.g. London, UK"/></div>
+          <div class="form-group"><label>Destination</label><input id="f-dest" placeholder="e.g. Berlin, Germany"/></div>
+          <div class="form-group"><label>Transport Mode</label>
+            <select id="f-mode"><option>Road</option><option>Air</option><option>Sea</option><option>Rail</option><option>Multimodal</option></select></div>
+          <div class="form-group"><label>Weight (kg)</label><input type="number" id="f-weight" placeholder="e.g. 500"/></div>
+          <div class="form-group"><label>Dispatch Date</label><input type="date" id="f-dispatch"/></div>
+          <div class="form-group"><label>Expected Delivery</label><input type="date" id="f-expected"/></div>
+          <div class="form-group"><label>Priority</label>
+            <select id="f-priority"><option>Standard</option><option>Express</option><option>Critical</option></select></div>
+          <div class="form-group"><label>Status</label>
+            <select id="f-status"><option>Pending</option><option>In Transit</option><option>Delayed</option><option>Delivered</option></select></div>
+        </div>
+        <div class="form-group" style="margin-top:12px"><label>Notes</label><textarea id="f-notes" rows="2" placeholder="Special handling instructions..."></textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-ghost" onclick="toggleAdd(false)">Cancel</button>
+          <button class="btn btn-primary" style="width:auto" onclick="createShipment()" id="create-btn">
+            <span id="create-spinner" style="display:none" class="spinner"></span>
+            Create & Predict
+          </button>
+        </div>
+      </div>
+
+      <div id="ship-alert"></div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Tracking ID</th><th>Route</th><th>Cargo</th><th>Mode</th>
+              <th>ETA</th><th>Risk</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="ship-tbody">
+              <tr><td colspan="8"><div class="empty"><div class="icon">📦</div><p>No shipments yet</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI PREDICT -->
+    <div class="page" id="page-predict">
+      <div class="section-header">
+        <div class="section-title">AI Prediction Engine</div>
+        <div style="color:var(--muted);font-size:13px">Powered by Claude — ETA · Delay Risk · Cost</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="card-title">🔮 Run Prediction</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group"><label>Origin</label><input id="p-origin" placeholder="e.g. Manchester, UK"/></div>
+            <div class="form-group"><label>Destination</label><input id="p-dest" placeholder="e.g. Paris, France"/></div>
+            <div class="form-group"><label>Cargo</label>
+              <select id="p-cargo"><option>Electronics</option><option>Pharmaceuticals</option><option>Food & Perishables</option><option>Industrial Equipment</option><option>General Freight</option></select></div>
+            <div class="form-group"><label>Mode</label>
+              <select id="p-mode"><option>Road</option><option>Air</option><option>Sea</option><option>Rail</option><option>Multimodal</option></select></div>
+            <div class="form-group"><label>Weight (kg)</label><input type="number" id="p-weight" placeholder="500"/></div>
+            <div class="form-group"><label>Conditions</label>
+              <select id="p-season">
+                <option value="Normal">Normal conditions</option>
+                <option value="Winter/Heavy Snow">Winter / Heavy snow</option>
+                <option value="Summer Peak">Summer peak demand</option>
+                <option value="Holiday Season">Holiday season</option>
+                <option value="Storm Warning">Storm / severe weather</option>
+                <option value="Port Strike">Port strike</option>
+              </select></div>
+            <button class="btn btn-primary" onclick="runPredict()" id="pred-btn">
+              <span id="pred-spinner" style="display:none" class="spinner"></span>
+              Run AI Prediction
+            </button>
+          </div>
+        </div>
+        <div>
+          <div class="card" id="pred-result">
+            <div class="card-title">📊 Results</div>
+            <div class="empty" style="padding:40px"><div class="icon">🤖</div><p>Fill the form and click Run</p></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🕐 History</div>
+            <div id="pred-history"><div class="empty" style="padding:20px"><p>No predictions yet</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROUTES -->
+    <div class="page" id="page-routes">
+      <div class="section-header">
+        <div class="section-title">Route Optimisation</div>
+        <div style="color:var(--muted);font-size:13px">Compare all transport modes — AI picks the best</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🗺 Route Analyser</div>
+        <div class="form-grid">
+          <div class="form-group"><label>From</label><input id="r-from" placeholder="Origin city"/></div>
+          <div class="form-group"><label>To</label><input id="r-to" placeholder="Destination city"/></div>
+          <div class="form-group"><label>Cargo</label>
+            <select id="r-cargo"><option>Electronics</option><option>Pharmaceuticals</option><option>Food & Perishables</option><option>Industrial Equipment</option><option>General Freight</option></select></div>
+          <div class="form-group"><label>Priority</label>
+            <select id="r-priority"><option value="cost">Lowest cost</option><option value="speed">Fastest</option><option value="balanced">Balanced</option><option value="reliability">Most reliable</option></select></div>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn btn-primary" style="width:auto" onclick="analyseRoutes()" id="route-btn">
+            <span id="route-spinner" style="display:none" class="spinner"></span>
+            Analyse Routes
+          </button>
+        </div>
+      </div>
+      <div id="route-results"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+// ─── CONFIG ──────────────────────────────────────
+const CONFIG_KEY = 'lq_config';
+let config = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+let auth = null;
+let currentUser = null;
+let userToken = null;
+let authMode = 'login';
+let predHistory = [];
+let shipments = [];
+let editId = null;
+
+const API = () => config.backendUrl || 'http://localhost:3001';
+
+// ─── SAVE CONFIG ─────────────────────────────────
+window.saveConfig = function() {
+  config = {
+    backendUrl: document.getElementById('cfg-backend').value.trim(),
+    fbApiKey: document.getElementById('cfg-fb-apiKey').value.trim(),
+    fbAuthDomain: document.getElementById('cfg-fb-authDomain').value.trim(),
+    fbProjectId: document.getElementById('cfg-fb-projectId').value.trim(),
+  };
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+  initFirebase();
+  showAuthError('Config saved! Now create an account.', true);
+};
+
+// ─── INIT FIREBASE AUTH ───────────────────────────
+function initFirebase() {
+  if (!config.fbApiKey) return;
+  try {
+    const app = initializeApp({
+      apiKey: config.fbApiKey,
+      authDomain: config.fbAuthDomain,
+      projectId: config.fbProjectId,
+    }, 'logistiq-' + Date.now());
+    auth = getAuth(app);
+    onAuthStateChanged(auth, async user => {
+      if (user) {
+        currentUser = user;
+        userToken = await user.getIdToken();
+        enterApp(user.email);
+      } else {
+        exitApp();
+      }
+    });
+  } catch(e) {
+    console.warn('Firebase auth not configured');
+  }
+}
+
+// ─── AUTH ─────────────────────────────────────────
+window.switchAuthTab = function(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (mode==='login'&&i===0)||(mode==='signup'&&i===1)));
+  document.getElementById('name-field').style.display = mode==='signup'?'flex':'none';
+  document.getElementById('auth-btn-text').textContent = mode==='signup'?'Create Account':'Sign In';
+};
+
+window.handleAuth = async function() {
+  if (!auth) {
+    showAuthError('Please save your Firebase config first.');
+    return;
+  }
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  if (!email || !password) { showAuthError('Please enter email and password'); return; }
+
+  const spinner = document.getElementById('auth-spinner');
+  const btn = document.getElementById('auth-btn');
+  spinner.style.display = 'inline-block'; btn.disabled = true;
+
+  try {
+    if (authMode === 'signup') {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Email already registered — try signing in',
+      'auth/user-not-found': 'No account found — try creating one',
+      'auth/wrong-password': 'Wrong password',
+      'auth/weak-password': 'Password must be at least 6 characters',
+      'auth/invalid-email': 'Invalid email address',
+    };
+    showAuthError(msgs[e.code] || e.message);
+  }
+  spinner.style.display = 'none'; btn.disabled = false;
+};
+
+window.signOut = async function() {
+  if (auth) await fbSignOut(auth);
+  currentUser = null; userToken = null;
+  exitApp();
+};
+
+function showAuthError(msg, success=false) {
+  const el = document.getElementById('auth-error');
+  el.style.display = 'block';
+  el.style.background = success ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.12)';
+  el.style.borderColor = success ? 'rgba(16,185,129,.3)' : 'rgba(239,68,68,.3)';
+  el.style.color = success ? '#34d399' : '#f87171';
+  el.textContent = msg;
+  setTimeout(() => el.style.display='none', 4000);
+}
+
+// ─── APP ENTER/EXIT ───────────────────────────────
+async function enterApp(email) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('user-email-display').textContent = email;
+  await loadShipments();
+  updateDashboard();
+}
+
+function exitApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+}
+
+// ─── API HELPER ───────────────────────────────────
+async function apiFetch(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+(userToken||'demo') }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API() + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+// ─── CRUD ─────────────────────────────────────────
+
+// CREATE
+window.createShipment = async function() {
+  const id = document.getElementById('f-id').value.trim();
+  const origin = document.getElementById('f-origin').value.trim();
+  const dest = document.getElementById('f-dest').value.trim();
+  if (!id || !origin || !dest) { showAlert('ship-alert', 'Please fill in Tracking ID, Origin and Destination.', 'error'); return; }
+
+  document.getElementById('create-spinner').style.display = 'inline-block';
+  document.getElementById('create-btn').disabled = true;
+
+  try {
+    const data = await apiFetch('/api/shipments', 'POST', {
+      trackingId: id,
+      cargo: document.getElementById('f-cargo').value,
+      origin, dest,
+      mode: document.getElementById('f-mode').value,
+      weight: document.getElementById('f-weight').value,
+      dispatch: document.getElementById('f-dispatch').value,
+      expected: document.getElementById('f-expected').value,
+      priority: document.getElementById('f-priority').value,
+      status: document.getElementById('f-status').value,
+      notes: document.getElementById('f-notes').value,
+    });
+    await loadShipments();
+    updateDashboard();
+    toggleAdd(false);
+    showAlert('ship-alert', `✅ Shipment ${id} created with AI prediction!`, 'success');
+  } catch(e) {
+    showAlert('ship-alert', `Error: ${e.message}`, 'error');
+  }
+
+  document.getElementById('create-spinner').style.display = 'none';
+  document.getElementById('create-btn').disabled = false;
+};
+
+// READ
+async function loadShipments() {
+  try {
+    const data = await apiFetch('/api/shipments');
+    shipments = data.shipments || [];
+    renderTable();
+  } catch(e) {
+    console.warn('Load failed:', e.message);
+  }
+}
+
+// UPDATE
+window.openEdit = function(id) {
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  editId = id;
+  document.getElementById('edit-form-fields').innerHTML = `
+    <div class="form-grid">
+      <div class="form-group"><label>Status</label>
+        <select id="e-status">${['Pending','In Transit','Delayed','Delivered'].map(v=>`<option ${s.status===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Priority</label>
+        <select id="e-priority">${['Standard','Express','Critical'].map(v=>`<option ${s.priority===v?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Expected Delivery</label>
+        <input type="date" id="e-expected" value="${s.expected||''}"/></div>
+      <div class="form-group"><label>Weight (kg)</label>
+        <input type="number" id="e-weight" value="${s.weight||''}"/></div>
+      <div class="form-group" style="grid-column:span 2"><label>Notes</label>
+        <textarea id="e-notes" rows="2">${s.notes||''}</textarea></div>
+    </div>`;
+  document.getElementById('edit-modal').classList.add('open');
+};
+
+window.closeEdit = function() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editId = null;
+};
+
+window.saveEdit = async function() {
+  if (!editId) return;
+  document.getElementById('edit-spinner').style.display = 'inline-block';
+  try {
+    await apiFetch('/api/shipments/' + editId, 'PUT', {
+      status: document.getElementById('e-status').value,
+      priority: document.getElementById('e-priority').value,
+      expected: document.getElementById('e-expected').value,
+      weight: document.getElementById('e-weight').value,
+      notes: document.getElementById('e-notes').value,
+    });
+    await loadShipments();
+    updateDashboard();
+    closeEdit();
+    showAlert('ship-alert', '✅ Shipment updated!', 'success');
+  } catch(e) {
+    alert('Update failed: ' + e.message);
+  }
+  document.getElementById('edit-spinner').style.display = 'none';
+};
+
+// DELETE
+window.confirmDelete = function(id, trackingId) {
+  if (!confirm(`Delete shipment ${trackingId}? This cannot be undone.`)) return;
+  apiFetch('/api/shipments/' + id, 'DELETE')
+    .then(() => { loadShipments(); updateDashboard(); showAlert('ship-alert','✅ Shipment deleted.','success'); })
+    .catch(e => showAlert('ship-alert','Error: '+e.message,'error'));
+};
+
+// ─── RENDER TABLE ─────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('ship-tbody');
+  if (!shipments.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="icon">📦</div><p>No shipments yet</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = shipments.map(s => {
+    const rc = {Low:'var(--green)',Medium:'var(--amber)',High:'var(--amber)',Critical:'var(--red)'}[s.risk]||'var(--muted)';
+    const sc = {
+      'In Transit':'s-transit','Delayed':'s-delayed','Delivered':'s-ontime',
+      'Pending':'s-pending','Critical':'s-critical'
+    }[s.status]||'s-pending';
+    const rp = s.riskScore||0;
+    return `<tr>
+      <td><strong style="color:var(--accent)">${s.trackingId}</strong></td>
+      <td style="font-size:12px">${s.origin} → ${s.dest}</td>
+      <td>${s.cargo}</td>
+      <td>${s.mode}</td>
+      <td style="font-size:12px;font-family:monospace">${s.expected||s.etaDays&&(s.etaDays+' days')||'—'}</td>
+      <td style="min-width:110px">
+        <div style="font-size:12px;color:${rc}">${s.risk||'—'} ${s.riskScore?'('+s.riskScore+'%)':''}</div>
+        <div class="risk-meter"><div class="risk-fill" style="width:${rp}%;background:${rc}"></div></div>
+      </td>
+      <td><span class="status-pill ${sc}">${s.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-sm" onclick="openEdit('${s.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${s.id}','${s.trackingId}')">Del</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── DASHBOARD ────────────────────────────────────
+function updateDashboard() {
+  const s = shipments;
+  document.getElementById('st-total').textContent = s.length;
+  document.getElementById('st-transit').textContent = s.filter(x=>x.status==='In Transit').length;
+  document.getElementById('st-risk').textContent = s.filter(x=>['Delayed','Critical'].includes(x.status)||['High','Critical'].includes(x.risk)).length;
+  const del = s.filter(x=>x.status==='Delivered').length;
+  document.getElementById('st-ontime').textContent = s.length ? Math.round(del/s.length*100)+'%' : '—';
+
+  const critical = s.filter(x=>['High','Critical'].includes(x.risk)||x.status==='Delayed');
+  document.getElementById('critical-list').innerHTML = critical.length ?
+    critical.slice(0,4).map(x=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500;font-size:13px">${x.trackingId}</div>
+        <div style="font-size:11px;color:var(--muted)">${x.origin} → ${x.dest}</div></div>
+        <span class="status-pill s-critical">${x.risk||x.status}</span>
+      </div>`).join('')
+    : '<div class="empty" style="padding:24px"><div class="icon">✅</div><p>All clear</p></div>';
+
+  document.getElementById('activity-list').innerHTML = s.length ?
+    s.slice(0,5).map(x=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div style="width:7px;height:7px;border-radius:50%;background:${x.status==='Delivered'?'var(--green)':x.status==='Delayed'?'var(--amber)':'var(--accent)'}"></div>
+        <div><div style="font-size:13px">${x.trackingId} — ${x.status}</div>
+        <div style="font-size:11px;color:var(--muted)">${x.origin} → ${x.dest}</div></div>
+      </div>`).join('')
+    : '<div class="empty" style="padding:24px"><div class="icon">📦</div><p>No activity yet</p></div>';
+}
+
+// ─── FLEET INTEL ──────────────────────────────────
+window.loadFleetIntel = async function() {
+  document.getElementById('fleet-intel').innerHTML = '<div style="padding:16px;color:var(--muted);font-size:13px"><span class="spinner"></span> Analysing fleet...</div>';
+  try {
+    const data = await apiFetch('/api/fleet-intel');
+    document.getElementById('fleet-intel').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div style="background:var(--surface2);border-radius:8px;padding:13px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">FLEET SIZE</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:22px">${data.shipmentCount||shipments.length}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:13px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">HIGH RISK</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;color:var(--red)">${shipments.filter(s=>['High','Critical'].includes(s.risk)).length}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:13px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px">DELIVERED</div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;color:var(--green)">${shipments.filter(s=>s.status==='Delivered').length}</div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;color:var(--muted)">
+        <strong style="color:var(--accent2)">🤖 Claude Intelligence Report:</strong><br>${data.intel}
+      </div>`;
+  } catch(e) {
+    document.getElementById('fleet-intel').innerHTML = `<div class="alert-error" style="margin:0">Failed: ${e.message}</div>`;
+  }
+};
+
+// ─── AI PREDICT ───────────────────────────────────
+window.runPredict = async function() {
+  const origin = document.getElementById('p-origin').value.trim();
+  const dest = document.getElementById('p-dest').value.trim();
+  if (!origin || !dest) { alert('Enter origin and destination'); return; }
+
+  document.getElementById('pred-spinner').style.display = 'inline-block';
+  document.getElementById('pred-btn').disabled = true;
+
+  try {
+    const data = await apiFetch('/api/predict', 'POST', {
+      origin, dest,
+      cargo: document.getElementById('p-cargo').value,
+      mode: document.getElementById('p-mode').value,
+      weight: document.getElementById('p-weight').value,
+      season: document.getElementById('p-season').value,
+    });
+    const p = data.prediction;
+    const rc = p.riskScore<30?'var(--green)':p.riskScore<60?'var(--amber)':'var(--red)';
+
+    document.getElementById('pred-result').innerHTML = `
+      <div class="card-title">📊 Prediction Results</div>
+      <div class="pred-metrics">
+        <div class="pred-metric"><div class="val" style="color:${rc}">${p.etaDays}d</div><div class="lbl">ETA Days</div></div>
+        <div class="pred-metric"><div class="val" style="color:${rc}">${p.riskScore}%</div><div class="lbl">Delay Risk</div></div>
+        <div class="pred-metric"><div class="val" style="color:var(--accent2)">${p.estimatedCost}</div><div class="lbl">Est. Cost</div></div>
+      </div>
+      <div class="prediction-box">
+        <h4>🤖 Claude Analysis</h4>
+        <p>${p.analysis}</p>
+      </div>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <div style="background:var(--surface2);border-radius:8px;padding:11px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:3px">OPTIMAL ROUTE</div>
+          <div style="font-size:13px">${p.optimalRoute}</div>
+        </div>
+        <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:11px">
+          <div style="font-size:11px;color:var(--red);margin-bottom:3px">⚠️ TOP RISK</div>
+          <div style="font-size:13px">${p.topRiskFactor}</div>
+        </div>
+        <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:11px">
+          <div style="font-size:11px;color:var(--green);margin-bottom:3px">✅ MITIGATION</div>
+          <div style="font-size:13px">${p.mitigation}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:8px">Confidence: ${p.confidence}</div>`;
+
+    predHistory.unshift({ origin, dest, risk: p.delayRisk, score: p.riskScore, eta: p.etaDays, cost: p.estimatedCost, time: new Date().toLocaleTimeString() });
+    predHistory = predHistory.slice(0,5);
+    const rc2 = s => ({Low:'var(--green)',Medium:'var(--amber)',High:'var(--red)',Critical:'var(--red)'}[s]||'var(--muted)');
+    document.getElementById('pred-history').innerHTML = predHistory.map(h=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:13px">${h.origin} → ${h.dest}</div>
+        <div style="font-size:11px;color:var(--muted)">${h.time}</div></div>
+        <div style="text-align:right"><div style="font-size:12px;color:${rc2(h.risk)}">${h.risk}</div>
+        <div style="font-size:11px;color:var(--muted)">${h.eta}d · ${h.cost}</div></div>
+      </div>`).join('');
+
+  } catch(e) {
+    document.getElementById('pred-result').innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  }
+  document.getElementById('pred-spinner').style.display = 'none';
+  document.getElementById('pred-btn').disabled = false;
+};
+
+// ─── ROUTES ───────────────────────────────────────
+window.analyseRoutes = async function() {
+  const from = document.getElementById('r-from').value.trim();
+  const to = document.getElementById('r-to').value.trim();
+  if (!from || !to) { alert('Enter origin and destination'); return; }
+
+  document.getElementById('route-spinner').style.display = 'inline-block';
+  document.getElementById('route-btn').disabled = true;
+
+  try {
+    const data = await apiFetch('/api/routes', 'POST', {
+      from, to,
+      cargo: document.getElementById('r-cargo').value,
+      priority: document.getElementById('r-priority').value,
+    });
+    const emoji = {Road:'🚛',Air:'✈️',Sea:'🚢',Rail:'🚂'};
+    const rc = s => ({Low:'var(--green)',Medium:'var(--amber)',High:'var(--red)'}[s]||'var(--muted)');
+    const cards = data.comparison.map(m => `
+      <div style="background:var(--card);border:${data.recommended.includes(m.mode)?'2px solid var(--accent)':'1px solid var(--border)'};border-radius:12px;padding:18px;position:relative">
+        ${data.recommended.includes(m.mode)?'<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;padding:3px 12px;border-radius:20px;font-weight:600;white-space:nowrap">⭐ BEST</div>':''}
+        <div style="font-size:22px;margin-bottom:8px">${emoji[m.mode]||'📦'}</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin-bottom:10px">${m.mode}</div>
+        <div style="display:grid;gap:5px">
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">ETA</span><strong>${m.days} days</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Cost</span><strong style="color:var(--accent2)">${m.cost}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--muted)">Risk</span><strong style="color:${rc(m.risk)}">${m.risk}</strong></div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--muted);line-height:1.4">${m.notes}</div>
+      </div>`).join('');
+
+    document.getElementById('route-results').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;position:relative">${cards}</div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">🤖 Strategic Advice</div>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7">${data.advice}</p>
+        <div style="margin-top:10px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);padding:10px 14px;border-radius:8px;font-size:13px;display:inline-flex;gap:8px;align-items:center">
+          <span>Recommended:</span><strong style="color:var(--accent)">${data.recommended}</strong>
+          <span style="color:var(--muted)">—</span><span style="color:var(--muted)">${data.reason}</span>
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('route-results').innerHTML = `<div class="alert alert-error">Error: ${e.message}</div>`;
+  }
+  document.getElementById('route-spinner').style.display = 'none';
+  document.getElementById('route-btn').disabled = false;
+};
+
+// ─── UI HELPERS ───────────────────────────────────
+window.showPage = function(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if (btn) btn.classList.add('active');
+};
+
+window.toggleAdd = function(show) {
+  document.getElementById('add-form').style.display = show ? 'block' : 'none';
+  if (show) document.getElementById('f-id').value = 'SHP-' + Date.now().toString().slice(-6);
+};
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type==='error'?'error':'success'}">${msg}</div>`;
+  setTimeout(() => el.innerHTML='', 4000);
+}
+
+// ─── INIT ─────────────────────────────────────────
+setTimeout(() => {
+  if (config.fbApiKey) {
+    initFirebase();
+    document.getElementById('cfg-backend').value = config.backendUrl || '';
+    document.getElementById('cfg-fb-apiKey').value = config.fbApiKey || '';
+    document.getElementById('cfg-fb-authDomain').value = config.fbAuthDomain || '';
+    document.getElementById('cfg-fb-projectId').value = config.fbProjectId || '';
+  } else {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+}, 800);
+
+</script>
+</body>
+</html>
