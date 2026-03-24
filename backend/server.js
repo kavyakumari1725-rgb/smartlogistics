@@ -19,7 +19,7 @@ app.use(express.json());
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function askAI(prompt) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
   const result = await model.generateContent(prompt);
   return result.response.text();
 }
@@ -68,10 +68,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-// ✅ ADD IT HERE
-app.get('/', (req, res) => {
-  res.send('🚀 LogistiQ Backend API is running');
-});
+
 // ════════════════════════════════════════════════
 //  SHIPMENTS — CRUD ROUTES
 // ════════════════════════════════════════════════
