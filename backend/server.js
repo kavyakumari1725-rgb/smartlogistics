@@ -388,3 +388,10 @@ app.listen(PORT, () => {
   console.log(`🚀 LogistiQ backend running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
 });
+// Keep Render awake - ping every 14 minutes
+const https = require('https');
+setInterval(() => {
+  https.get('https://smartlogistics-1.onrender.com/health', (res) => {
+    console.log('🔄 Keep-alive ping sent');
+  }).on('error', () => {});
+}, 840000);
