@@ -68,7 +68,10 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
+// ✅ ADD IT HERE
+app.get('/', (req, res) => {
+  res.send('🚀 LogistiQ Backend API is running');
+});
 // ════════════════════════════════════════════════
 //  SHIPMENTS — CRUD ROUTES
 // ════════════════════════════════════════════════
